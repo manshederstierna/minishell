@@ -10,13 +10,18 @@
 #define TOK_BUFSIZE 64
 #define TOK_DELIM " \t\r\n\a"
 
-int main(int argc, char **argv){
 
+void sh_loop(void);
+char *sh_read_line(void);
+char **sh_split_line(char *line);
+int sh_launch(char **args);
+int sh_execute(char **args);
 
-    lsh_loop();
-
-    return EXIT_SUCCESS;
-}
+int sh_cd(char **args);
+int sh_help(char **args);
+int sh_exit(char **args);
+int sh_num_builtins(void);
+int sh_pwd(char **args);
 
 
 void sh_loop(void){
@@ -25,7 +30,7 @@ void sh_loop(void){
     int status;
 
     do{
-        print("> "):
+        printf("> ");
         line = sh_read_line();
         args = sh_split_line(line);
         status = sh_execute(args);
@@ -61,9 +66,9 @@ char *sh_read_line(void){
 
         if(position >= bufsize){
             bufsize += BUFSIZE;
-            buffer = realloc(buffer,bufsize)
+            buffer = realloc(buffer,bufsize);
             if(buffer == NULL){
-                fprinf(stderr, "minishell: allocatione error \n");
+                fprintf(stderr, "minishell: allocatione error \n");
                 exit(EXIT_FAILURE);
             }
         }
@@ -78,7 +83,7 @@ char **sh_split_line(char *line){
     char *token;
 
     if(tokens == NULL){
-        fprinf(stderr, "minishell: allocation error");
+        fprintf(stderr, "minishell: allocation error");
         exit(EXIT_FAILURE);
     }
 
@@ -110,10 +115,9 @@ int sh_launch(char **args){
         if(execvp(args[0],args) == -1){
             perror("minishell");
         }
-        exit(EXIT_FAILURE):
+        exit(EXIT_FAILURE);
     }
-        exit(EXIT_FAILURE):
-    else if(pid < 0){
+    else if (pid < 0){
         perror("minishell");
     } else {
 
@@ -133,22 +137,24 @@ int sh_exit(char **args);
 char *builtin_str[] = {
   "cd",
   "help",
-  "exit"
+  "exit",
+  "pwd"
 };
 
 int (*builtin_func[]) (char **) = {
     &sh_cd,
     &sh_help,
-    &sh_exit
+    &sh_exit,
+    &sh_pwd
 };
 
 int sh_num_builtins(){
-    return sizeof(builtin_str / sizeof(char*));
+    return sizeof(builtin_str) / sizeof(builtin_str[0]);
 }
 
 int sh_cd(char **args){
-    if (args[0] == NULL){
-        fprinf(stderr, "minishell: Expected argument to \"cd\" \n");
+    if (args[1] == NULL){
+        fprintf(stderr, "minishell: Expected argument to \"cd\" \n");
     } else {
         if (chdir(args[1]) != 0){
             perror("minishell");
@@ -171,6 +177,19 @@ int sh_help(char **args){
     return 1;
 }
 
+int sh_pwd(char **args){
+    char cwd[1024];
+
+    if(getcwd(cwd,sizeof(cwd)) != NULL){
+        printf("%s\n",cwd);
+    } else{
+        perror("minishell");
+    }
+    
+    return 1;
+
+}
+
 int sh_exit(char **args){
     return 0;
 }
@@ -183,11 +202,20 @@ int sh_execute(char **args){
         return 1;
     }
 
-    for(i=0; i < sh_num_builtins; i++){
+    for(i=0; i < sh_num_builtins(); i++){
         if(strcmp(args[0], builtin_str[i]) == 0){
             return (*builtin_func[i])(args);
         }
     }
 
     return sh_launch(args);
+}
+
+
+int main(int argc, char **argv){
+
+
+    sh_loop();
+
+    return EXIT_SUCCESS;
 }
