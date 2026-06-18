@@ -9,6 +9,7 @@
 #define TRUE 1
 #define TOK_BUFSIZE 64
 #define TOK_DELIM " \t\r\n\a"
+#define CURRENT_VERSION "1.0.0"
 
 
 void sh_loop(void);
@@ -22,7 +23,9 @@ int sh_help(char **args);
 int sh_exit(char **args);
 int sh_num_builtins(void);
 int sh_pwd(char **args);
-
+int sh_clear(char **args);
+int sh_echo(char **args);
+int sh_version(char **args);
 
 void sh_loop(void){
     char *line;
@@ -129,23 +132,24 @@ int sh_launch(char **args){
     return 1;
 }
 
-int sh_cd(char **args);
-int sh_help(char **args);
-int sh_exit(char **args);
-
-
 char *builtin_str[] = {
   "cd",
   "help",
   "exit",
-  "pwd"
+  "pwd",
+  "clear",
+  "echo",
+  "version"
 };
 
 int (*builtin_func[]) (char **) = {
     &sh_cd,
     &sh_help,
     &sh_exit,
-    &sh_pwd
+    &sh_pwd,
+    &sh_clear,
+    &sh_echo,
+    &sh_version
 };
 
 int sh_num_builtins(){
@@ -165,7 +169,7 @@ int sh_cd(char **args){
 
 int sh_help(char **args){
     int i;
-    printf("unix minishell");
+    printf("unix minishell \n");
     printf("Type program names and arguments and then hit ENTER to proceed. \n");
     printf("The following are built in: \n");
 
@@ -173,7 +177,7 @@ int sh_help(char **args){
         printf(" %s\n", builtin_str[i]);
     }
 
-    printf("Use the man command followed by the program name for instructions on usage");
+    printf("Use the man command followed by the program name for instructions on usage \n");
     return 1;
 }
 
@@ -185,9 +189,36 @@ int sh_pwd(char **args){
     } else{
         perror("minishell");
     }
-    
-    return 1;
 
+    return 1;
+}
+
+int sh_clear(char **args){
+    printf("\033[2J\033[H");
+    return 1;
+}
+
+int sh_version(char **args){
+    printf("%s", CURRENT_VERSION);
+    printf("\n");
+    return 1;
+}
+
+int sh_echo(char **args){
+    int i = 1;
+
+    while(args[i] != NULL){
+        printf("%s",args[i]);
+
+        if(args[i+1] != NULL){
+            printf(" ");
+        }
+        i++;
+    }
+
+    printf("\n");
+    return 1;
+    
 }
 
 int sh_exit(char **args){
