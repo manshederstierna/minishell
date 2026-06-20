@@ -3,6 +3,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 
 #define BUFSIZE 1024
@@ -15,7 +16,7 @@
 void sh_loop(void);
 char *sh_read_line(void);
 char **sh_split_line(char *line);
-int sh_launch(char **args);
+int sh_launch(char **args, char *output_file);
 int sh_execute(char **args);
 
 int sh_cd(char **args);
@@ -109,12 +110,28 @@ char **sh_split_line(char *line){
     return tokens;
 }
 
-int sh_launch(char **args){
-    pid_t pid, wpid;
+int sh_launch(char **args, char *output_file){
+    pid_t pid,wpid; 
     int status;
 
     pid = fork();
-    if(pid ==0){
+    if(pid == 0){
+        if(output_file != NULL){
+            int fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+            if(fd == -1){
+                perror("minishell");
+                exit(EXIT_FAILURE);
+            }
+            
+            if(dup2(fd, STDOUT_FILENO) == -1){
+                perror("minishell");
+                close(fd);
+                exit(EXIT_FAILURE);
+            }
+            close(fd);
+
+        }
         if(execvp(args[0],args) == -1){
             perror("minishell");
         }
@@ -198,6 +215,7 @@ int sh_clear(char **args){
     return 1;
 }
 
+
 int sh_version(char **args){
     printf("%s", CURRENT_VERSION);
     printf("\n");
@@ -227,7 +245,22 @@ int sh_exit(char **args){
 
 
 int sh_execute(char **args){
-    int i;
+    int i = 0;
+    char *output_file = NULL;
+
+    while(args[i] != NULL){
+        if(strcmp(args[i],">") == 0){
+            if(args[i+1] == NULL){
+                fprintf(stderr, "minishell: expected filename after >\n");
+                return 1;
+            }
+
+            output_file = args[i+1];
+            args[i] = NULL;
+            break;
+        }
+        i++;
+    }
 
     if(args[0] == NULL){
         return 1;
@@ -235,11 +268,47 @@ int sh_execute(char **args){
 
     for(i=0; i < sh_num_builtins(); i++){
         if(strcmp(args[0], builtin_str[i]) == 0){
-            return (*builtin_func[i])(args);
+            if(output_file == NULL){
+                return (*builtin_func[i])(args);
+            }
+
+            int saved_stdout = dup(STDOUT_FILENO);
+            if(saved_stdout == -1){
+                perror("minishell");
+                return 1;
+            }
+
+            int fd = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+
+            if(fd == -1){
+                perror("minishell");
+                return 1;
+            }
+
+            if(dup2(fd,STDOUT_FILENO) == -1){
+                perror("minishell");
+                close(fd);
+                close(saved_stdout);
+                return 1;
+            }
+
+            close(fd);
+
+            int result = (*builtin_func[i])(args);
+
+            fflush(stdout);
+
+            dup2(saved_stdout, STDOUT_FILENO);
+            close(saved_stdout);
+
+            return result;  
+
+
         }
     }
 
-    return sh_launch(args);
+
+    return sh_launch(args,output_file);
 }
 
 
@@ -250,3 +319,4 @@ int main(int argc, char **argv){
 
     return EXIT_SUCCESS;
 }
+
