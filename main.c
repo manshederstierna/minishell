@@ -16,9 +16,9 @@
 void sh_loop(void);
 char *sh_read_line(void);
 char **sh_split_line(char *line);
-int sh_launch(char **args, char *output_file);
-int sh_execute(char **args);
 
+int sh_launch(char **args, char *output_file, int bool_append);
+int sh_execute(char **args);
 int sh_cd(char **args);
 int sh_help(char **args);
 int sh_exit(char **args);
@@ -110,15 +110,20 @@ char **sh_split_line(char *line){
     return tokens;
 }
 
-int sh_launch(char **args, char *output_file){
+int sh_launch(char **args, char *output_file, int bool_append){
     pid_t pid,wpid; 
     int status;
 
     pid = fork();
     if(pid == 0){
         if(output_file != NULL){
-            int fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-
+			int fd;
+			if(bool_append == 0){
+				fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			} else {
+				fd = open(output_file, O_WRONLY | O_APPEND | O_CREAT, 0644);
+			}
+			
             if(fd == -1){
                 perror("minishell");
                 exit(EXIT_FAILURE);
@@ -247,6 +252,7 @@ int sh_exit(char **args){
 int sh_execute(char **args){
     int i = 0;
     char *output_file = NULL;
+	int bool_append = 0;
 
     while(args[i] != NULL){
         if(strcmp(args[i],">") == 0){
@@ -259,6 +265,20 @@ int sh_execute(char **args){
             args[i] = NULL;
             break;
         }
+		
+		if(strcmp(args[i],">>") == 0){
+			    if(args[i+1] == NULL){
+                fprintf(stderr, "minishell: expected filename after >>\n");
+                return 1;
+				}
+				
+				output_file = args[i+1];
+				bool_append  = 1;
+				args[i] = NULL;
+				break;
+		}
+		
+		
         i++;
     }
 
@@ -277,8 +297,12 @@ int sh_execute(char **args){
                 perror("minishell");
                 return 1;
             }
-
-            int fd = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+			int fd;
+			if(bool_append == 0){
+				fd = open(output_file, O_WRONLY | O_TRUNC | O_CREAT, 0644);
+			} else{
+				fd = open(output_file, O_WRONLY | O_APPEND | O_CREAT, 0644);
+			}
 
             if(fd == -1){
                 perror("minishell");
@@ -308,7 +332,7 @@ int sh_execute(char **args){
     }
 
 
-    return sh_launch(args,output_file);
+    return sh_launch(args,output_file,bool_append);
 }
 
 
