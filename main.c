@@ -19,6 +19,7 @@ char **sh_split_line(char *line);
 
 int sh_launch(char **args, char *output_file, int bool_append);
 int sh_execute(char **args);
+int sh_launch_pipe(char **left_args, char **right_args);
 int sh_cd(char **args);
 int sh_help(char **args);
 int sh_exit(char **args);
@@ -154,6 +155,16 @@ int sh_launch(char **args, char *output_file, int bool_append){
     return 1;
 }
 
+int sh_launch_pipe(char **left_args, char **right_args){
+	int fd[2];
+	if(pipe(fd) == -1){
+		perror("minishell");
+	}
+	
+	return 1;
+}
+
+
 char *builtin_str[] = {
   "cd",
   "help",
@@ -191,7 +202,7 @@ int sh_cd(char **args){
 
 int sh_help(char **args){
     int i;
-    printf("unix minishell \n");
+    printf("Unix minishell \n");
     printf("Type program names and arguments and then hit ENTER to proceed. \n");
     printf("The following are built in: \n");
 
@@ -253,6 +264,22 @@ int sh_execute(char **args){
     int i = 0;
     char *output_file = NULL;
 	int bool_append = 0;
+	int bool_has_pipe = 0;
+	
+	while(args[i] != NULL){
+		if(strcmp(args[i], "|") == 0	){
+			bool_has_pipe = 1;
+			args[i] = NULL;
+			return 	sh_launch_pipe(&args[0],&args[i+1]); 
+
+		}
+		i++;
+	}
+	
+	if(bool_has_pipe == 0){
+		i = 0;
+	}
+	
 
     while(args[i] != NULL){
         if(strcmp(args[i],">") == 0){
