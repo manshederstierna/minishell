@@ -79,7 +79,6 @@ char *sh_read_line(void){
         }
     } 
 
-
 }
 
 char **sh_split_line(char *line){
@@ -156,10 +155,51 @@ int sh_launch(char **args, char *output_file, int bool_append){
 }
 
 int sh_launch_pipe(char **left_args, char **right_args){
-	int fd[2];
-	if(pipe(fd) == -1){
+	pid_t pid_writer;
+	pid_t pid_reader;
+	int status;
+	int pipefd[2]; // [0] is reader, [1] is writer
+	if(pipe(pipefd) == -1){
 		perror("minishell");
 	}
+	
+	pid_writer = fork();
+	
+	if(pid_writer == 0){
+			close(pipefd[0]);
+			if(dup2(pipefd[1], STDOUT_FILENO) == -1){
+				perror("minishell: ");
+				exit(EXIT_FAILURE);
+			}
+			close(pipefd[1]);
+			
+		    if(execvp(left_args[0],left_args) == -1){
+				perror("minishell");
+				exit(EXIT_FAILURE);
+			}	
+	}
+	
+	pid_reader = fork();
+	
+	if(pid_reader == 0){
+		close(pipefd[1]);
+		if((dup2(pipefd[0],STDIN_FILENO) == -1)){
+			perror("minishell: ");
+			exit(EXIT_FAILURE);
+		}
+		
+		if(execvp(right_args[0],right_args) == -1){
+			perror("minishell: ");
+			exit(EXIT_FAILURE);
+		}	
+	}
+	
+	close(pipefd[0]);
+	close(pipefd[1]);
+	
+	
+	waitpid(pid_writer, &status, 0);
+	waitpid(pid_reader, &status, 0);
 	
 	return 1;
 }
@@ -259,7 +299,6 @@ int sh_exit(char **args){
     return 0;
 }
 
-
 int sh_execute(char **args){
     int i = 0;
     char *output_file = NULL;
@@ -276,11 +315,8 @@ int sh_execute(char **args){
 		i++;
 	}
 	
-	if(bool_has_pipe == 0){
-		i = 0;
-	}
+	i = 0; // if no pipe was found
 	
-
     while(args[i] != NULL){
         if(strcmp(args[i],">") == 0){
             if(args[i+1] == NULL){
@@ -304,7 +340,6 @@ int sh_execute(char **args){
 				args[i] = NULL;
 				break;
 		}
-		
 		
         i++;
     }
@@ -358,16 +393,11 @@ int sh_execute(char **args){
         }
     }
 
-
     return sh_launch(args,output_file,bool_append);
 }
 
-
 int main(int argc, char **argv){
-
-
     sh_loop();
-
     return EXIT_SUCCESS;
 }
 
