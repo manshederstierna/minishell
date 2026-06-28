@@ -388,8 +388,6 @@ int sh_execute(char **args){
             close(saved_stdout);
 
             return result;  
-
-
         }
     }
 
