@@ -303,11 +303,9 @@ int sh_execute(char **args){
     int i = 0;
     char *output_file = NULL;
 	int bool_append = 0;
-	int bool_has_pipe = 0;
 	
 	while(args[i] != NULL){
 		if(strcmp(args[i], "|") == 0	){
-			bool_has_pipe = 1;
 			args[i] = NULL;
 			return 	sh_launch_pipe(&args[0],&args[i+1]); 
 
