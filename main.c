@@ -168,13 +168,13 @@ int sh_launch_pipe(char **left_args, char **right_args){
 	if(pid_writer == 0){
 			close(pipefd[0]);
 			if(dup2(pipefd[1], STDOUT_FILENO) == -1){
-				perror("minishell: ");
+				perror("minishell: Pipe failed");
 				exit(EXIT_FAILURE);
 			}
 			close(pipefd[1]);
 			
 		    if(execvp(left_args[0],left_args) == -1){
-				perror("minishell");
+				perror("minishell: Pipe exec failed");
 				exit(EXIT_FAILURE);
 			}	
 	}
@@ -184,12 +184,12 @@ int sh_launch_pipe(char **left_args, char **right_args){
 	if(pid_reader == 0){
 		close(pipefd[1]);
 		if((dup2(pipefd[0],STDIN_FILENO) == -1)){
-			perror("minishell: ");
+			perror("minishell: Pipe failed");
 			exit(EXIT_FAILURE);
 		}
 		
 		if(execvp(right_args[0],right_args) == -1){
-			perror("minishell: ");
+			perror("minishell: Pipe exec failed");
 			exit(EXIT_FAILURE);
 		}	
 	}
@@ -250,7 +250,7 @@ int sh_help(char **args){
         printf(" %s\n", builtin_str[i]);
     }
 
-    printf("Use the man command followed by the program name for instructions on usage \n");
+    printf("Use the man command followed by the program name for instructions on usage (Not implemented yet) \n");
     return 1;
 }
 
