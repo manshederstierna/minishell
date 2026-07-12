@@ -5,12 +5,20 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-
 #define BUFSIZE 1024
 #define TRUE 1
 #define TOK_BUFSIZE 64
 #define TOK_DELIM " \t\r\n\a"
 #define CURRENT_VERSION "1.0.0"
+
+#define COLOR_RESET   "\033[0m"	
+#define COLOR_RED     "\033[31m"
+#define COLOR_GREEN   "\033[32m"
+#define COLOR_YELLOW  "\033[33m"
+#define COLOR_BLUE    "\033[34m"
+#define COLOR_MAGENTA "\033[35m"
+#define COLOR_CYAN    "\033[36m"
+#define COLOR_WHITE   "\033[37m"
 
 
 void sh_loop(void);
@@ -40,7 +48,7 @@ void sh_loop(void){
     int status;
 
     do{
-        printf("> ");
+        printf(COLOR_CYAN "> " COLOR_RESET);
         line = sh_read_line();
         args = sh_split_line(line);
         status = sh_execute(args);
