@@ -29,7 +29,8 @@ int sh_clear(char **args);
 int sh_echo(char **args);
 int sh_version(char **args);
 int sh_debug(char **args);
-int sh_google(char ** args);
+int sh_google(char **args);
+int sh_close(char **args);
 
 int debug_mode = 0;
 
@@ -254,7 +255,8 @@ char *builtin_str[] = {
   "echo",
   "version",
   "debug",
-  "google"
+  "google",
+  "close"
 };
 
 int (*builtin_func[]) (char **) = {
@@ -266,7 +268,8 @@ int (*builtin_func[]) (char **) = {
     &sh_echo,
     &sh_version,
 	&sh_debug,
-    &sh_google
+    &sh_google,
+	&sh_close
 };
 
 int sh_num_builtins(){
@@ -290,7 +293,7 @@ int sh_debug(char **args){
 	}
 }
 
-sh_google(char **args){
+int sh_google(char **args){
     char url[2048] = "https://www.google.com/search?q=";
 
     for(int i = 1; args[i] != NULL; i++){
@@ -303,7 +306,17 @@ sh_google(char **args){
     pid_t pid = fork();
 
     if(pid == 0){
-        execlp("xdg-open", "xdg-open", url, NULL);
+		if(debug_mode == 0){
+			int fd = open("/dev/null", O_WRONLY);
+			
+			if(fd == -1){
+				perror("minishell: failed to access /dev/null");
+				exit(EXIT_FAILURE);
+			}
+			dup2(fd,STDERR_FILENO);
+			close(fd);
+		}
+        execlp("firefox", "firefox", url, NULL);
         perror("minishell: google");
         exit(EXIT_FAILURE);
     } else if (pid < 0) {
@@ -382,6 +395,10 @@ int sh_echo(char **args){
 
 int sh_exit(char **args){
     return 0;
+}
+
+int sh_close(char **args){
+	return 0;
 }
 
 int sh_execute(char **args){
