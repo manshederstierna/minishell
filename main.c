@@ -28,6 +28,9 @@ int sh_pwd(char **args);
 int sh_clear(char **args);
 int sh_echo(char **args);
 int sh_version(char **args);
+int sh_debug(char **args);
+
+int debug_mode = 0;
 
 void sh_loop(void){
     char *line;
@@ -161,11 +164,24 @@ int sh_launch_pipe(char **left_args, char **right_args){
 	int pipefd[2]; // [0] is reader, [1] is writer
 	if(pipe(pipefd) == -1){
 		perror("minishell");
+		return 1;
+	}
+	
+	if(debug_mode == 1){
+		fprintf(stderr, "[minishell debug] pipe() created\n");
 	}
 	
 	pid_writer = fork();
 	
+	if (pid_writer < 0) {
+		perror("minishell: fork failed");
+		return 1;
+	}	
+	
 	if(pid_writer == 0){
+			if(debug_mode == 1){
+				fprintf(stderr,"[minishell debug] writer child running with PID %d\n", getpid());
+			}
 			close(pipefd[0]);
 			if(dup2(pipefd[1], STDOUT_FILENO) == -1){
 				perror("minishell: Pipe failed");
@@ -177,11 +193,24 @@ int sh_launch_pipe(char **left_args, char **right_args){
 				perror("minishell: Pipe exec failed");
 				exit(EXIT_FAILURE);
 			}	
+	} else{
+		if(debug_mode == 1){
+			fprintf(stderr, "[minishell debug] parent forked writer child PID %d\n", pid_writer);
+		}
 	}
 	
 	pid_reader = fork();
+		
+	if (pid_reader < 0) {
+		perror("minishell: fork failed");
+		return 1;
+	}	
 	
 	if(pid_reader == 0){
+		if(debug_mode == 1){
+				fprintf(stderr,"[minishell debug] reader child running with PID %d\n", getpid());
+		}
+		
 		close(pipefd[1]);
 		if((dup2(pipefd[0],STDIN_FILENO) == -1)){
 			perror("minishell: Pipe failed");
@@ -192,15 +221,25 @@ int sh_launch_pipe(char **left_args, char **right_args){
 			perror("minishell: Pipe exec failed");
 			exit(EXIT_FAILURE);
 		}	
+	} else{
+		if(debug_mode == 1){
+			fprintf(stderr, "[minishell debug] parent forked reader child PID %d\n", pid_reader);
+		}
 	}
 	
 	close(pipefd[0]);
 	close(pipefd[1]);
 	
-	
 	waitpid(pid_writer, &status, 0);
+	if (debug_mode == 1) {
+		fprintf(stderr, "[minishell debug] writer child finished PID: %d\n", pid_writer);
+	}
+
 	waitpid(pid_reader, &status, 0);
-	
+	if (debug_mode == 1) {
+		fprintf(stderr, "[minishell debug] reader child finished PID: %d\n", pid_reader);
+	}
+
 	return 1;
 }
 
@@ -212,7 +251,8 @@ char *builtin_str[] = {
   "pwd",
   "clear",
   "echo",
-  "version"
+  "version",
+  "debug"
 };
 
 int (*builtin_func[]) (char **) = {
@@ -222,11 +262,29 @@ int (*builtin_func[]) (char **) = {
     &sh_pwd,
     &sh_clear,
     &sh_echo,
-    &sh_version
+    &sh_version,
+	&sh_debug
 };
 
 int sh_num_builtins(){
     return sizeof(builtin_str) / sizeof(builtin_str[0]);
+}
+int sh_debug(char **args){
+	if(args[1] == NULL){
+		fprintf(stderr, "minishell: Expected argument to \"debug (on/off)\" \n");
+		return 1;
+	} else if(strcmp(args[1],"on") == 0) {
+		debug_mode = 1;
+		printf("minishell: debug turned on, use \"debug off\" to turn off \n");
+		return 1;
+	} else if(strcmp(args[1],"off") == 0){
+		debug_mode = 0;
+		printf("minishell: debug turned off, use \"debug on\" to turn on \n");
+		return 1;
+	} else{
+		fprintf(stderr, "minishell: Invalid argument to \"debug (on/off)\" \n");
+		return 1;
+	}
 }
 
 int sh_cd(char **args){
