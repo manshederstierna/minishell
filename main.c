@@ -29,6 +29,7 @@ int sh_clear(char **args);
 int sh_echo(char **args);
 int sh_version(char **args);
 int sh_debug(char **args);
+int sh_google(char ** args);
 
 int debug_mode = 0;
 
@@ -252,7 +253,8 @@ char *builtin_str[] = {
   "clear",
   "echo",
   "version",
-  "debug"
+  "debug",
+  "google"
 };
 
 int (*builtin_func[]) (char **) = {
@@ -263,7 +265,8 @@ int (*builtin_func[]) (char **) = {
     &sh_clear,
     &sh_echo,
     &sh_version,
-	&sh_debug
+	&sh_debug,
+    &sh_google
 };
 
 int sh_num_builtins(){
@@ -285,6 +288,30 @@ int sh_debug(char **args){
 		fprintf(stderr, "minishell: Invalid argument to \"debug (on/off)\" \n");
 		return 1;
 	}
+}
+
+sh_google(char **args){
+    char url[2048] = "https://www.google.com/search?q=";
+
+    for(int i = 1; args[i] != NULL; i++){
+        if(i > 1){
+            strcat(url,"+");
+        }
+        strcat(url,args[i]);
+    }
+
+    pid_t pid = fork();
+
+    if(pid == 0){
+        execlp("xdg-open", "xdg-open", url, NULL);
+        perror("minishell: google");
+        exit(EXIT_FAILURE);
+    } else if (pid < 0) {
+        perror("minishell: fork failed");
+    }
+
+    return 1;
+
 }
 
 int sh_cd(char **args){
