@@ -16,8 +16,8 @@ A small Unix shell written in C.
   * `help`
   * `version`
   * `exit`
-  * 'google'
-  * 'debug'
+  * `google`
+  * `debug`
 * Output redirection:
 
   * `>` overwrite a file
