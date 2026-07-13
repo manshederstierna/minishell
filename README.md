@@ -2,7 +2,7 @@
 
 A small Unix shell written in C.
 
-`minishell` is just a fun shell project. Is it a subset of the shell I run it in? Maybe. Was it fun to make? Yes. 
+`minishell` is just a fun shell project. Could it be considered a subset of the shell I run it in? Maybe. Was it fun to make? Yes. 
 
 ## Features
 
@@ -16,6 +16,8 @@ A small Unix shell written in C.
   * `help`
   * `version`
   * `exit`
+  * 'google'
+  * 'debug'
 * Output redirection:
 
   * `>` overwrite a file
@@ -25,6 +27,9 @@ A small Unix shell written in C.
   * `ls | grep main`
   * `echo hello | wc -c`
 * Dynamically reads input and tokenizes commands
+  
+* Debug mode for showing what the shell does internally
+* google command for opening a search query in the browser
 
 ## Build and run
 
@@ -51,6 +56,10 @@ Hello from minishell
 > ls | grep main
 main
 main.c
+
+> google unix pipe dup2
+
+This opens a Google search for unix pipe dup2 in the browser.
 
 > cat main.c | grep fork
 pid = fork();
