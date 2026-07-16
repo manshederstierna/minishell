@@ -305,7 +305,7 @@ int sh_google(char **args)
             dup2(fd, STDERR_FILENO);
             close(fd);
         }
-        execlp("firefox", "firefox", url, NULL);
+        execlp("xdg-open", "xdg-open", url, NULL);
         perror("minishell: google");
         exit(EXIT_FAILURE);
     } else if (pid < 0) {
