@@ -1,45 +1,6 @@
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#include "minishell.h"
 
-#define BUFSIZE 1024
-#define TRUE 1
-#define TOK_BUFSIZE 64
-#define TOK_DELIM " \t\r\n\a"
-#define CURRENT_VERSION "1.0.0"
-
-#define COLOR_RESET "\033[0m"
-#define COLOR_RED "\033[31m"
-#define COLOR_GREEN "\033[32m"
-#define COLOR_YELLOW "\033[33m"
-#define COLOR_BLUE "\033[34m"
-#define COLOR_MAGENTA "\033[35m"
-#define COLOR_CYAN "\033[36m"
-#define COLOR_WHITE "\033[37m"
-
-void sh_loop(void);
-char *sh_read_line(void);
-char **sh_split_line(char *line);
-
-int sh_launch(char **args, char *output_file, int bool_append);
-int sh_execute(char **args);
-int sh_launch_pipe(char **left_args, char **right_args);
-int sh_cd(char **args);
-int sh_help(char **args);
-int sh_exit(char **args);
-int sh_num_builtins(void);
-int sh_pwd(char **args);
-int sh_clear(char **args);
-int sh_echo(char **args);
-int sh_version(char **args);
-int sh_debug(char **args);
-int sh_google(char **args);
-int sh_close(char **args);
-
-int debug_mode = 0;
+DebugMode debug_mode = 0;
 
 void sh_loop(void)
 {
@@ -176,7 +137,7 @@ int sh_launch_pipe(char **left_args, char **right_args)
         return 1;
     }
 
-    if (debug_mode == 1) {
+    if (debug_mode == DEBUG_ON) {
         fprintf(stderr, "[minishell debug] pipe() created\n");
     }
 
@@ -188,7 +149,7 @@ int sh_launch_pipe(char **left_args, char **right_args)
     }
 
     if (pid_writer == 0) {
-        if (debug_mode == 1) {
+        if (debug_mode == DEBUG_ON) {
             fprintf(stderr, "[minishell debug] writer child running with PID %d\n", getpid());
         }
         close(pipefd[0]);
@@ -203,7 +164,7 @@ int sh_launch_pipe(char **left_args, char **right_args)
             exit(EXIT_FAILURE);
         }
     } else {
-        if (debug_mode == 1) {
+        if (debug_mode == DEBUG_ON) {
             fprintf(stderr, "[minishell debug] parent forked writer child PID %d\n", pid_writer);
         }
     }
@@ -216,7 +177,7 @@ int sh_launch_pipe(char **left_args, char **right_args)
     }
 
     if (pid_reader == 0) {
-        if (debug_mode == 1) {
+        if (debug_mode == DEBUG_ON) {
             fprintf(stderr, "[minishell debug] reader child running with PID %d\n", getpid());
         }
 
@@ -231,7 +192,7 @@ int sh_launch_pipe(char **left_args, char **right_args)
             exit(EXIT_FAILURE);
         }
     } else {
-        if (debug_mode == 1) {
+        if (debug_mode == DEBUG_ON) {
             fprintf(stderr, "[minishell debug] parent forked reader child PID %d\n", pid_reader);
         }
     }
@@ -240,12 +201,12 @@ int sh_launch_pipe(char **left_args, char **right_args)
     close(pipefd[1]);
 
     waitpid(pid_writer, &status, 0);
-    if (debug_mode == 1) {
+    if (debug_mode == DEBUG_ON) {
         fprintf(stderr, "[minishell debug] writer child finished PID: %d\n", pid_writer);
     }
 
     waitpid(pid_reader, &status, 0);
-    if (debug_mode == 1) {
+    if (debug_mode == DEBUG_ON) {
         fprintf(stderr, "[minishell debug] reader child finished PID: %d\n", pid_reader);
     }
 
@@ -268,11 +229,11 @@ int sh_debug(char **args)
         fprintf(stderr, "minishell: Expected argument to \"debug (on/off)\" \n");
         return 1;
     } else if (strcmp(args[1], "on") == 0) {
-        debug_mode = 1;
+        debug_mode = DEBUG_ON;
         printf("minishell: debug turned on, use \"debug off\" to turn off \n");
         return 1;
     } else if (strcmp(args[1], "off") == 0) {
-        debug_mode = 0;
+        debug_mode = DEBUG_OFF;
         printf("minishell: debug turned off, use \"debug on\" to turn on \n");
         return 1;
     } else {
@@ -295,8 +256,8 @@ int sh_google(char **args)
     pid_t pid = fork();
 
     if (pid == 0) {
-        if (debug_mode == 0) {
-            int fd = open("/dev/null", O_WRONLY);
+        if (debug_mode == DEBUG_OFF) { 
+            int fd = open("/dev/null", O_WRONLY); // write to void to avoid writing out potential messages from the browser
 
             if (fd == -1) {
                 perror("minishell: failed to access /dev/null");
