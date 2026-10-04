@@ -266,14 +266,16 @@ int sh_weather(char **args){
             NULL
         };
         execvp(args[0],args);
-        perror("execvp failed");
-        return 1;
+
+        //only reached if execvp fails
+        perror("execvp failed, perhaps curl is not installed?");
+        exit(EXIT_FAILURE);
     } else if(pid < 0){
         perror("minishell: fork failed");
         return 1;
     }
-
-    return 0;
+    waitpid(pid,NULL,0);
+    return 1;
 }
 
 int sh_google(char **args)
