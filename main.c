@@ -254,7 +254,7 @@ int sh_weather(char **args){
     char *url_part2 = "?format=3";
     char *location = args[1];
 
-    sprintf(url, "%s %s %s", url_part1, location, url_part2);
+    sprintf(url, "%s%s%s", url_part1, location, url_part2);
 
     pid_t pid = fork();
 
