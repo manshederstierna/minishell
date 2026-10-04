@@ -214,10 +214,10 @@ int sh_launch_pipe(char **left_args, char **right_args)
 }
 
 char *builtin_str[] = {"cd",   "help",    "exit",  "pwd",    "clear",
-                       "echo", "version", "debug", "google", "close"};
+                       "echo", "version", "debug", "google", "close", "weather"};
 
 int (*builtin_func[])(char **) = {&sh_cd,   &sh_help,    &sh_exit,  &sh_pwd,    &sh_clear,
-                                  &sh_echo, &sh_version, &sh_debug, &sh_google, &sh_close};
+                                  &sh_echo, &sh_version, &sh_debug, &sh_google, &sh_close, &sh_weather};
 
 int sh_num_builtins()
 {
@@ -240,6 +240,10 @@ int sh_debug(char **args)
         fprintf(stderr, "minishell: Invalid argument to \"debug (on/off)\" \n");
         return 1;
     }
+}
+int sh_weather(char **args){
+
+    return 0;
 }
 
 int sh_google(char **args)

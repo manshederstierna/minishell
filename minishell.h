@@ -48,5 +48,6 @@ int sh_version(char **args);
 int sh_debug(char **args);
 int sh_google(char **args);
 int sh_close(char **args);
+int sh_weather(char **args);
 
 #endif
