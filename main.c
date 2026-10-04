@@ -242,6 +242,36 @@ int sh_debug(char **args)
     }
 }
 int sh_weather(char **args){
+    // example curl "wttr.in/Lund?format=3"
+    if(args[1] == NULL){
+        fprintf(stderr,"minishell: expected location argument after command: weather");
+        return 1;
+    }
+
+    char url[2048];
+
+    char *url_part1 = "wttr.in/";
+    char *url_part2 = "?format=3";
+    char *location = args[1];
+
+    sprintf(url, "%s %s %s", url_part1, location, url_part2);
+
+    pid_t pid = fork();
+
+    if(pid == 0){
+        char *args[] = {
+            "curl",
+            "-s",
+            url,
+            NULL
+        };
+        execvp(args[0],args);
+        perror("execvp failed");
+        return 1;
+    } else if(pid < 0){
+        perror("minishell: fork failed");
+        return 1;
+    }
 
     return 0;
 }
