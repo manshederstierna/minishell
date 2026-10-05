@@ -6,7 +6,7 @@ A small Unix shell written in C.
 
 ## Features
 
-* Runs external programs using `fork()`, `execvp()`, and `waitpid()`
+* Runs external programs using `fork()`, `execvp()`, `execlp()`, and `waitpid()`
 * Built-in commands:
 
   * `cd`
@@ -18,6 +18,7 @@ A small Unix shell written in C.
   * `exit`
   * `google`
   * `debug`
+  * `weather`
 * Output redirection:
 
   * `>` overwrite a file
@@ -29,16 +30,25 @@ A small Unix shell written in C.
 * Dynamically reads input and tokenizes commands
   
 * Debug mode for showing what the shell does internally
-* google command for opening a search query in the browser
+* `google` command for opening a search query in the browser
+* `weather` command for getting the weather of a city 
 
 ## Build and run
 
-This project uses POSIX system calls, so it should be compiled on Linux, macOS, or WSL.
+This project is designed for Linux systems and should be compiled and run in a Linux or POSIX-compatible environment.
 
 ```bash
 gcc -Wall -Wextra -std=c11 main.c -o minishell
 ./minishell
 ```
+## Requirements
+* A POSIX-compatible environment
+
+* GCC or another C compiler
+
+* `curl` for the `weather` command
+
+* `xdg-open` for the `google` command
 
 ## Example usage
 
@@ -57,9 +67,12 @@ Hello from minishell
 main
 main.c
 
-> google unix pipe dup2
+> google cute pictures of cats
 
-This opens a Google search for unix pipe dup2 in the browser.
+This opens a Google search for "cute pictures of cats" in the host system's default browser.
+
+> weather Lund
+Lund: 🌦 +8°C
 
 > cat main.c | grep fork
 pid = fork();
@@ -115,4 +128,4 @@ This project helped me practice:
 * Dynamic memory allocation
 * Parsing command-line input
 * POSIX system calls in C
-
+* Making HTTP/HTTPS requests using `curl`
